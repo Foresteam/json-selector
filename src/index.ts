@@ -87,8 +87,8 @@ export function selectFields<T, S extends DeepSelector<T>, M extends RefineMode 
   return walk(data, selector);
 }
 
-export function zodSchemaToDeepSelectorSchema<T extends z.ZodTypeAny>(schema: T): z.ZodTypeAny {
-  const unwrap = (s: z.ZodTypeAny): z.ZodTypeAny => {
+export function zodSchemaToDeepSelectorSchema<T extends z.ZodSchema<any>>(schema: T): z.ZodSchema<any> {
+  const unwrap = (s: z.ZodSchema<any>): z.ZodSchema<any> => {
     if (s instanceof z.ZodOptional || s instanceof z.ZodNullable) {
       return unwrap(s.unwrap());
     }
@@ -99,11 +99,11 @@ export function zodSchemaToDeepSelectorSchema<T extends z.ZodTypeAny>(schema: T)
 
   if (s instanceof z.ZodObject) {
     const shape = s.shape;
-    const newShape: Record<string, z.ZodTypeAny> = {};
+    const newShape: Record<string, z.ZodSchema<any>> = {};
     for (const key in shape) {
-      newShape[key] = z.union([z.literal(true), zodSchemaToDeepSelectorSchema(shape[key])]).optional();
+      newShape[key] = z.union([z.boolean(), zodSchemaToDeepSelectorSchema(shape[key])]).optional();
     }
-    return z.object(newShape);
+    return z.object(newShape).strict();
   }
 
   if (s instanceof z.ZodArray) {
@@ -111,11 +111,11 @@ export function zodSchemaToDeepSelectorSchema<T extends z.ZodTypeAny>(schema: T)
   }
 
   if (s instanceof z.ZodUnion) {
-    const options = s._def.options as z.ZodTypeAny[];
+    const options = s._def.options as z.ZodSchema<any>[];
     const schemas = options.map(opt => zodSchemaToDeepSelectorSchema(opt));
     return schemas.reduce((a, b) => z.union([a, b]));
   }
 
   // Primitive: just allow true
-  return z.literal(true);
+  return z.boolean();
 }
