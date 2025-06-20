@@ -1,6 +1,6 @@
 {
   "name": "@foresteam/json-selector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "node": ">=22.0.0"
   },
@@ -16,6 +16,13 @@
     "dist"
   ],
   "keywords": [],
+  "author": {
+    "name": "Foresteam"
+  },
+  "repository": {
+    "url": "https://github.com/Foresteam/json-selector.git",
+    "type": "git"
+  },
   "license": "MIT",
   "devDependencies": {
     "typescript": "^5.8.3",
