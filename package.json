@@ -1,6 +1,6 @@
 {
   "name": "@foresteam/json-selector",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "engines": {
     "node": ">=22.0.0"
   },
