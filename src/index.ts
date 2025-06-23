@@ -88,34 +88,45 @@ export function selectFields<T, S extends DeepSelector<T>, M extends RefineMode 
 }
 
 export function zodSchemaToDeepSelectorSchema<T extends z.ZodSchema<any>>(schema: T): z.ZodSchema<any> {
-  const unwrap = (s: z.ZodSchema<any>): z.ZodSchema<any> => {
-    if (s instanceof z.ZodOptional || s instanceof z.ZodNullable) {
-      return unwrap(s.unwrap());
+  const unwrap = (s: z.ZodTypeAny): z.ZodTypeAny => {
+    const typeName = s._def.typeName;
+
+    if (typeName === z.ZodFirstPartyTypeKind.ZodOptional || typeName === z.ZodFirstPartyTypeKind.ZodNullable) {
+      return unwrap(s._def.innerType);
     }
+
     return s;
   };
 
   const s = unwrap(schema);
+  const typeName = s._def.typeName;
 
-  if (s instanceof z.ZodObject) {
-    const shape = s.shape;
-    const newShape: Record<string, z.ZodSchema<any>> = {};
+  if (typeName === z.ZodFirstPartyTypeKind.ZodObject) {
+    const shape = (s as z.ZodObject<any>)._def.shape();
+
+    const newShape: Record<string, z.ZodTypeAny> = {};
     for (const key in shape) {
-      newShape[key] = z.union([z.boolean(), zodSchemaToDeepSelectorSchema(shape[key])]).optional();
+      const field = shape[key];
+      newShape[key] = z.union([
+        z.boolean(),
+        zodSchemaToDeepSelectorSchema(field)
+      ]).optional();
     }
+
     return z.object(newShape).strict();
   }
 
-  if (s instanceof z.ZodArray) {
-    return zodSchemaToDeepSelectorSchema(s.element);
+  if (typeName === z.ZodFirstPartyTypeKind.ZodArray) {
+    const element = (s as z.ZodArray<any>)._def.type;
+    return zodSchemaToDeepSelectorSchema(element);
   }
 
-  if (s instanceof z.ZodUnion) {
-    const options = s._def.options as z.ZodSchema<any>[];
+  if (typeName === z.ZodFirstPartyTypeKind.ZodUnion) {
+    const options = (s as z.ZodUnion<[z.ZodTypeAny, ...z.ZodTypeAny[]]>)._def.options;
     const schemas = options.map(opt => zodSchemaToDeepSelectorSchema(opt));
     return schemas.reduce((a, b) => z.union([a, b]));
   }
 
-  // Primitive: just allow true
+  // Fallback for primitives and unknowns
   return z.boolean();
 }
