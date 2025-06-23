@@ -87,7 +87,7 @@ export function selectFields<T, S extends DeepSelector<T>, M extends RefineMode 
   return walk(data, selector);
 }
 
-export function zodSchemaToDeepSelectorSchema<T extends z.ZodSchema<any>>(schema: T): z.ZodSchema<any> {
+export function zodSchemaToDeepSelectorSchema(schema: z.ZodSchema<any>): z.ZodSchema<any> {
   const unwrap = (s: z.ZodTypeAny): z.ZodTypeAny => {
     const typeName = s._def.typeName;
 
