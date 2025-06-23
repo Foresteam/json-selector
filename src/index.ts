@@ -87,11 +87,11 @@ export function selectFields<T, S extends DeepSelector<T>, M extends RefineMode 
   return walk(data, selector);
 }
 
-export function zodSchemaToDeepSelectorSchema(schema: z.ZodSchema<any>): z.ZodSchema<any> {
+export function zodSchemaToDeepSelectorSchema(schema: z.ZodSchema<any>, zod = z): z.ZodSchema<any> {
   const unwrap = (s: z.ZodTypeAny): z.ZodTypeAny => {
     const typeName = s._def.typeName;
 
-    if (typeName === z.ZodFirstPartyTypeKind.ZodOptional || typeName === z.ZodFirstPartyTypeKind.ZodNullable) {
+    if (typeName === zod.ZodFirstPartyTypeKind.ZodOptional || typeName === zod.ZodFirstPartyTypeKind.ZodNullable) {
       return unwrap(s._def.innerType);
     }
 
@@ -101,32 +101,32 @@ export function zodSchemaToDeepSelectorSchema(schema: z.ZodSchema<any>): z.ZodSc
   const s = unwrap(schema);
   const typeName = s._def.typeName;
 
-  if (typeName === z.ZodFirstPartyTypeKind.ZodObject) {
+  if (typeName === zod.ZodFirstPartyTypeKind.ZodObject) {
     const shape = (s as z.ZodObject<any>)._def.shape();
 
     const newShape: Record<string, z.ZodTypeAny> = {};
     for (const key in shape) {
       const field = shape[key];
-      newShape[key] = z.union([
-        z.boolean(),
+      newShape[key] = zod.union([
+        zod.boolean(),
         zodSchemaToDeepSelectorSchema(field)
       ]).optional();
     }
 
-    return z.object(newShape).strict();
+    return zod.object(newShape).strict();
   }
 
-  if (typeName === z.ZodFirstPartyTypeKind.ZodArray) {
+  if (typeName === zod.ZodFirstPartyTypeKind.ZodArray) {
     const element = (s as z.ZodArray<any>)._def.type;
     return zodSchemaToDeepSelectorSchema(element);
   }
 
-  if (typeName === z.ZodFirstPartyTypeKind.ZodUnion) {
+  if (typeName === zod.ZodFirstPartyTypeKind.ZodUnion) {
     const options = (s as z.ZodUnion<[z.ZodTypeAny, ...z.ZodTypeAny[]]>)._def.options;
     const schemas = options.map(opt => zodSchemaToDeepSelectorSchema(opt));
-    return schemas.reduce((a, b) => z.union([a, b]));
+    return schemas.reduce((a, b) => zod.union([a, b]));
   }
 
   // Fallback for primitives and unknowns
-  return z.boolean();
+  return zod.boolean();
 }
