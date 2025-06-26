@@ -78,8 +78,8 @@ const selected = selectFields(user, selector);
 
 ```typescript
 const excludeSelector: DeepSelector<User> = {
-  email: true,
-  address: { zip: true }
+  email: false,
+  address: { zip: false }
 };
 
 const result = selectFields(user, excludeSelector, { mode: 'exclude' });
