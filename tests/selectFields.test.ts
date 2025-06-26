@@ -110,9 +110,9 @@ describe(`field selector ${selectFields.name} function`, () => {
   describe('exclude mode', () => {
     it('excludes specified fields', () => {
       const excludeSelector = {
-        email: true,
+        email: false,
         address: {
-          zip: true
+          zip: false
         }
       } satisfies DeepSelector<User>;
 
@@ -136,7 +136,7 @@ describe(`field selector ${selectFields.name} function`, () => {
     it('excludes nested arrays partially', () => {
       const selector = {
         roles: {
-          name: true
+          name: false
         }
       } satisfies DeepSelector<User>;
 
@@ -155,7 +155,7 @@ describe(`field selector ${selectFields.name} function`, () => {
     it('excludes deeply nested fields', () => {
       const selector = {
         address: {
-          city: true
+          city: false
         }
       } satisfies DeepSelector<User>;
 

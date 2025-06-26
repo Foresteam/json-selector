@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export type DeepSelector<T> = {
-  [K in keyof T]?: true | (T[K] extends Array<infer U> ? DeepSelector<U> : T[K] extends object ? DeepSelector<T[K]> : never);
+  [K in keyof T]?: boolean | (T[K] extends Array<infer U> ? DeepSelector<U> : T[K] extends object ? DeepSelector<T[K]> : never);
 };
 
 type DeepSelect<T, S> = {
@@ -66,8 +66,8 @@ export function selectFields<T, S extends DeepSelector<T>, M extends RefineMode 
         } else if (typeof sel === 'object' && sel !== null && val !== undefined) {
           result[key] = walk(val, sel);
         }
-      } else if (mode === 'exclude') {
-        if (sel === true) {
+      } else {
+        if (sel === false) {
           continue;
         } else if (typeof sel === 'object' && sel !== null && val !== undefined) {
           if (Array.isArray(val)) {
