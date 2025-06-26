@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "christian-kohler.path-intellisense",
+    "dbaeumer.vscode-eslint",
+    "formulahendry.auto-rename-tag",
+    "streetsidesoftware.code-spell-checker",
+    "rohit-gohri.format-code-action",
+    "emeraldwalk.runonsave"
+  ]
+}

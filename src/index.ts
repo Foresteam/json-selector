@@ -46,39 +46,34 @@ export function selectFields<T, S extends DeepSelector<T>, M extends RefineMode 
   const mode = options?.mode ?? 'include';
 
   const walk = (data: any, selector: any): any => {
-    if (Array.isArray(data)) {
+    if (Array.isArray(data))
       return data.map(item => walk(item, selector));
-    }
-
-    if (typeof data !== 'object' || data === null) {
+    if (typeof data !== 'object' || data === null)
       return data;
-    }
 
     const result: Record<string, unknown> = {};
-
     for (const key in data) {
       const sel = selector?.[key];
       const val = data[key];
 
       if (mode === 'include') {
-        if (sel === true) {
+        if (sel === true)
           result[key] = val;
-        } else if (typeof sel === 'object' && sel !== null && val !== undefined) {
+        else if (typeof sel === 'object' && sel !== null && val !== undefined)
           result[key] = walk(val, sel);
-        }
-      } else {
-        if (sel === false) {
-          continue;
-        } else if (typeof sel === 'object' && sel !== null && val !== undefined) {
-          if (Array.isArray(val)) {
-            result[key] = val.map((item: any) => walk(item, sel));
-          } else {
-            result[key] = walk(val, sel);
-          }
-        } else {
-          result[key] = val;
-        }
+        continue;
       }
+
+      if (sel === false)
+        continue;
+      if (typeof sel === 'object' && sel !== null && val !== undefined) {
+        if (Array.isArray(val))
+          result[key] = val.map((item: any) => walk(item, sel));
+        else
+          result[key] = walk(val, sel);
+        continue;
+      }
+      result[key] = val;
     }
 
     return result;
@@ -90,11 +85,8 @@ export function selectFields<T, S extends DeepSelector<T>, M extends RefineMode 
 export function zodSchemaToDeepSelectorSchema(schema: z.ZodSchema<any>, zod = z): z.ZodSchema<any> {
   const unwrap = (s: z.ZodTypeAny): z.ZodTypeAny => {
     const typeName = s._def.typeName;
-
-    if (typeName === zod.ZodFirstPartyTypeKind.ZodOptional || typeName === zod.ZodFirstPartyTypeKind.ZodNullable) {
+    if (typeName === zod.ZodFirstPartyTypeKind.ZodOptional || typeName === zod.ZodFirstPartyTypeKind.ZodNullable)
       return unwrap(s._def.innerType);
-    }
-
     return s;
   };
 
@@ -107,10 +99,7 @@ export function zodSchemaToDeepSelectorSchema(schema: z.ZodSchema<any>, zod = z)
     const newShape: Record<string, z.ZodTypeAny> = {};
     for (const key in shape) {
       const field = shape[key];
-      newShape[key] = zod.union([
-        zod.boolean(),
-        zodSchemaToDeepSelectorSchema(field)
-      ]).optional();
+      newShape[key] = zod.union([zod.boolean(), zodSchemaToDeepSelectorSchema(field)]).optional();
     }
 
     return zod.object(newShape).strict();

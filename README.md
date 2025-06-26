@@ -32,7 +32,7 @@ pnpm add @foresteam/json-selector
 ### Selecting fields
 
 ```typescript
-import { selectFields, DeepSelector } from '@foresteam/json-selector';
+import { DeepSelector, selectFields } from '@foresteam/json-selector';
 
 interface User {
   id: number;
@@ -55,14 +55,14 @@ const user: User = {
   address: { city: 'Wonderland', zip: '12345' },
   roles: [
     { name: 'admin', level: 10 },
-    { name: 'editor', level: 5 },
-  ],
+    { name: 'editor', level: 5 }
+  ]
 };
 
 const selector: DeepSelector<User> = {
   name: true,
   address: { city: true },
-  roles: { name: true },
+  roles: { name: true }
 };
 
 const selected = selectFields(user, selector);
@@ -79,7 +79,7 @@ const selected = selectFields(user, selector);
 ```typescript
 const excludeSelector: DeepSelector<User> = {
   email: true,
-  address: { zip: true },
+  address: { zip: true }
 };
 
 const result = selectFields(user, excludeSelector, { mode: 'exclude' });
@@ -100,8 +100,8 @@ const result = selectFields(user, excludeSelector, { mode: 'exclude' });
 If you use Zod for schema validation, you can automatically generate a corresponding selector schema for runtime validation of selectors:
 
 ```typescript
-import { z } from 'zod';
 import { zodSchemaToDeepSelectorSchema } from '@foresteam/json-selector';
+import { z } from 'zod';
 
 const userSchema = z.object({
   id: z.number(),
@@ -110,15 +110,15 @@ const userSchema = z.object({
   address: z
     .object({
       city: z.string(),
-      zip: z.string(),
+      zip: z.string()
     })
     .nullable(),
   roles: z.array(
     z.object({
       name: z.string(),
-      level: z.number(),
-    }),
-  ),
+      level: z.number()
+    })
+  )
 });
 
 const selectorSchema = zodSchemaToDeepSelectorSchema(userSchema);

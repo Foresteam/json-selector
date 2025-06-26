@@ -7,10 +7,15 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run test && tsc",
+    "build": "pnpm run lint-full && tsc",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "prepare": "npm run build"
+    "lint": "eslint --fix",
+    "lint-full": "pnpm run lint && pnpm run test",
+    "lint-staged": "pnpm exec lint-staged",
+    "precommit": "lint-staged && pnpm run lint",
+    "commitlint": "commitlint --edit",
+    "prepare": "sh prepare.sh && pnpm run build"
   },
   "files": [
     "dist"
@@ -25,11 +30,25 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@antfu/eslint-config": "3.16.0",
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "eslint": "9.21.0",
+    "eslint-plugin-format": "1.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "prettier": "^3.5.2",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",
     "zod": "^3.25.67"
   },
   "peerDependencies": {
     "zod": "^3.25.67"
+  },
+  "lint-staged": {
+    "*.{ts,vue,js,html,css,scss,sass}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   }
 }
