@@ -21,8 +21,8 @@ type DeepSelect<T, S> = {
 };
 
 type DeepExclude<T, S> = {
-  [K in keyof T as K extends keyof S ? (S[K] extends true ? never : K) : K]: K extends keyof S
-    ? S[K] extends true
+  [K in keyof T as K extends keyof S ? (S[K] extends false ? never : K) : K]: K extends keyof S
+    ? S[K] extends false
       ? never
       : T[K] extends Array<infer U>
         ? S[K] extends DeepSelector<U>
@@ -38,13 +38,96 @@ type DeepExclude<T, S> = {
 
 type RefineMode = 'include' | 'exclude';
 
-export function selectFields<T, S extends DeepSelector<T>, M extends RefineMode = 'include'>(
+/**
+ * @summary Selects deeply nested fields from an object based on a selector structure.
+ *
+ * @param data - The input object to extract fields from.
+ * @param selector - Field selector in object form. Use `true` to include fields, nested objects to go deeper, and `false` to exclude.
+ * @example
+ * // Example selector:
+ * const selector = {
+ *   a: {
+ *     nested: true,
+ *     nested2: { field: true }
+ *   },
+ *   b: false
+ * };
+ *
+ * @param options - Configuration options.
+ * @param options.mode - Determines behavior of the selector:
+ * - `'include'` (default): Select only the fields marked as `true` in the selector.
+ * - `'exclude'`: Remove the fields marked as `true` in the selector and keep the rest.
+ *
+ * @returns A new object with fields selected according to the selector and mode.
+ *
+ * @example
+ * // Include mode
+ * const user: User = {
+ *   id: 1,
+ *   name: 'Alice',
+ *   email: 'alice@example.com',
+ *   address: { city: 'Wonderland', zip: '12345' },
+ *   roles: [
+ *     { name: 'admin', level: 10 },
+ *     { name: 'editor', level: 5 }
+ *   ]
+ * };
+ * const selector: DeepSelector<User> = {
+ *   name: true,
+ *   address: { city: true },
+ *   roles: { name: true }
+ * };
+ * const selected = selectFields(user, selector);
+ * // Result:
+ * // {
+ * //   name: 'Alice',
+ * //   address: { city: 'Wonderland' },
+ * //   roles: [{ name: 'admin' }, { name: 'editor' }],
+ * // }
+ *
+ * @example
+ * // Exclude mode
+ * const user: User = {
+ *   id: 1,
+ *   name: 'Alice',
+ *   email: 'alice@example.com',
+ *   address: { city: 'Wonderland', zip: '12345' },
+ *   roles: [
+ *     { name: 'admin', level: 10 },
+ *     { name: 'editor', level: 5 }
+ *   ]
+ * };
+ * const excludeSelector: DeepSelector<User> = {
+ *   email: false,
+ *   address: { zip: false }
+ * };
+ *
+ * const result = selectFields(user, excludeSelector, { mode: 'exclude' });
+ * // Result:
+ * // {
+ * //   id: 1,
+ * //   name: 'Alice',
+ * //   address: { city: 'Wonderland' },
+ * //   roles: [
+ * //     { name: 'admin', level: 10 },
+ * //     { name: 'editor', level: 5 },
+ * //   ],
+ * // }
+ */
+export function selectFields<T extends object, S extends DeepSelector<T>, M extends RefineMode>(
   data: T,
   selector: S,
-  options?: { mode?: M }
+  {
+    mode = 'include' as M
+  }: {
+    /**
+     * Determines behavior of the selector:
+     * - `'include'` (default): Select only the fields marked as `true` in the selector.
+     * - `'exclude'`: Remove the fields marked as `true` in the selector and keep the rest.
+     */
+    mode?: M;
+  } = {}
 ): M extends 'exclude' ? DeepExclude<T, S> : DeepSelect<T, S> {
-  const mode = options?.mode ?? 'include';
-
   const walk = (data: any, selector: any): any => {
     if (Array.isArray(data))
       return data.map(item => walk(item, selector));
@@ -82,6 +165,35 @@ export function selectFields<T, S extends DeepSelector<T>, M extends RefineMode 
   return walk(data, selector);
 }
 
+/**
+ * Converts a given Zod schema into a "deep selector" Zod schema.
+ *
+ * @param schema - The original Zod schema describing the data shape (e.g., `z.object(...)`).
+ * @param zod - Optional Zod instance to use (useful when working with multiple Zod versions). Defaults to the imported `z`.
+ *
+ * @returns Schema for `selectFields` selector for the given `schema`
+ *
+ * @example
+ * ```ts
+ * const userSchema = z.object({
+ *   id: z.number(),
+ *   profile: z.object({
+ *     name: z.string(),
+ *     email: z.string(),
+ *   }),
+ * });
+ *
+ * const selectorSchema = zodSchemaToDeepSelectorSchema(userSchema);
+ * // Produces schema matching:
+ * // {
+ * //   id?: boolean;
+ * //   profile?: {
+ * //     name?: boolean;
+ * //     email?: boolean;
+ * //   };
+ * // }
+ * ```
+ */
 export function zodSchemaToDeepSelectorSchema(schema: z.ZodSchema<any>, zod = z): z.ZodSchema<any> {
   const unwrap = (s: z.ZodTypeAny): z.ZodTypeAny => {
     const typeName = s._def.typeName;
